@@ -1,3 +1,4 @@
 .staging/
+release-branch/
 .DS_Store
 *.tmp

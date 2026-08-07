@@ -2,6 +2,9 @@
 
 个人 clash / mihomo 代理配置用到的第三方资源镜像站。**不改一个字节，原样转发**——纯粹是因为直连下面这些项目在部分网络环境下不稳定，才每天自动转存一份，供 Forgejo / Gitee 等下游 pull mirror。
 
+仓库分两个分支：`main` 只放 workflow/README/LICENSE 这些"源码"，人工维护，正常线性历史；实际同步下来的文件（下面表格里的所有东西）都在 **`release` 分支**，引用本仓库文件时用 `raw/branch/release/<路径>`，例如：
+`https://git.zopiya.dev/mirror/mihub/raw/branch/release/ui/metacubexd.zip`。
+
 ## 📡 最新同步状态
 
 <!-- SYNC_STATUS:START -->
@@ -40,9 +43,9 @@
 
 每天一次，`sync.yml` 对每个资源：
 
-1. 查上游最新版本，和 `_meta/*.json` 里记的上次版本比对，没变就跳过（省流量）。
+1. 查上游最新版本，和 `release` 分支 `_meta/*.json` 里记的上次版本比对，没变就跳过（省流量）。
 2. 变了就下载校验：压缩包完整性、体积不低于上次的一半、关键文件存在等。**校验不过就保留旧版本，绝不用坏数据覆盖好数据。**
-3. 有更新就把当前状态压成单个 commit 强推自己（历史永远只有一个 commit，体积不会随时间累积）；下游对本仓库做 pull mirror 就行，不需要额外配置。
+3. 有更新就把 `release` 分支当前状态压成单个 commit 强推（历史永远只有一个 commit，体积不会随时间累积）；`main` 只追加一条很小的 README 状态更新 commit，正常历史，不 squash。下游对本仓库做 pull mirror 就行，不需要额外配置。
 4. 只要有资源校验失败，这次 run 就会标红并触发 GitHub 邮件通知——不会悄悄带病运行。
 
 ## 手动跑一次 / 排查问题
@@ -51,7 +54,7 @@ Actions 页面 `Run workflow` 时勾上 `force`，可以无视版本比对强制
 
 Clash Verge Rev / FlClash 那几条资产名匹配正则是按官方打包习惯写的，没有逐一核对过真实文件名。如果日志报"未匹配到 asset"或"未找到对应 asset"，去对应仓库的 Releases 页面看一眼当次实际文件名，改一下 [sync.yml](.github/workflows/sync.yml) 里那条正则就行，不影响其它资源。
 
-如果给 `main` 分支开了 branch protection，记得给这个 workflow 的 push 开例外，否则 squash 之后的强推会被拒绝。
+如果给 `release` 分支开了 branch protection，记得给这个 workflow 的 push 开例外，否则 squash 之后的强推会被拒绝。
 
 ## 许可证
 

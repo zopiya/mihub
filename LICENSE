@@ -22,6 +22,6 @@ SOFTWARE.
 
 ---
 
-本许可证仅覆盖本仓库自身的原创内容（README、GitHub Actions workflow 脚本等）。
-`ui/`、`geo/`、`icons/`、`rules/`、`asn/`、`clients/` 下镜像的第三方文件不做任何修改地原样转发，
-各自遵循其上游项目自己的许可证，见 README.md「镜像清单与许可证」一节。
+本许可证仅覆盖 `main` 分支上本仓库自身的原创内容（README、GitHub Actions workflow 脚本等）。
+`release` 分支下 `ui/`、`geo/`、`icons/`、`rules/`、`asn/`、`clients/` 里镜像的第三方文件
+不做任何修改地原样转发，各自遵循其上游项目自己的许可证，见 README.md「镜像了什么」一节。
