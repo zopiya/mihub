@@ -1,0 +1,441 @@
+name: sync
+
+on:
+  schedule:
+    - cron: "0 20 * * *" # 每天 UTC 20:00（北京时间 04:00）
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "忽略版本比对，强制重新拉取全部资源（用于验证正则/首次调试）"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mihub-sync
+  cancel-in-progress: false
+
+env:
+  # 所有 api.github.com 调用都带上认证，走 5000 次/小时的额度，
+  # 避免多个 step 共用 60 次/小时的匿名限额、在共享 runner IP 上被限流导致整批假性失败。
+  GH_AUTH: "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"
+  # schedule 触发时 github.event.inputs 不存在，取值为空，回退到 'false'
+  FORCE: ${{ github.event.inputs.force || 'false' }}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: 准备目录
+        run: mkdir -p _meta .staging ui geo icons rules/clash-rules asn clients/mihomo clients/clash-verge-rev clients/flclash
+
+      # ------------------------------------------------------------------
+      # A 类：配置资源
+      # ------------------------------------------------------------------
+
+      - name: metacubexd
+        id: mcxd
+        continue-on-error: true
+        run: |
+          set -e
+          rel=$(curl -fsSL --max-time 30 --retry 3 --retry-delay 5 -H "$GH_AUTH" \
+            "https://api.github.com/repos/MetaCubeX/metacubexd/releases/latest")
+          # 官方发布资产名已从 dist.zip 改成 compressed-dist.tgz，mihomo external-ui-url 只认 zip，需要解压重新打包
+          asset_url=$(echo "$rel" | jq -r '.assets[] | select(.name=="compressed-dist.tgz") | .browser_download_url')
+          new_ver=$(echo "$rel" | jq -r '.tag_name')
+          if [ -z "$asset_url" ] || [ "$asset_url" = "null" ]; then
+            echo "::error::metacubexd 未找到 compressed-dist.tgz，上游可能改了发布格式"; exit 1
+          fi
+          old_ver=$(jq -r '.version // empty' _meta/metacubexd.json 2>/dev/null || true)
+          if [ "$new_ver" = "$old_ver" ] && [ "$FORCE" != "true" ]; then echo "metacubexd 版本未变 ($new_ver)"; exit 0; fi
+          curl -fL --max-time 300 --retry 3 --retry-delay 5 -o .staging/compressed-dist.tgz "$asset_url"
+          rm -rf .staging/mcxd && mkdir -p .staging/mcxd
+          tar -xzf .staging/compressed-dist.tgz -C .staging/mcxd
+          test -f .staging/mcxd/index.html
+          ( cd .staging/mcxd && zip -qr ../metacubexd.zip . )
+          unzip -t .staging/metacubexd.zip >/dev/null
+          if [ -f ui/metacubexd.zip ]; then
+            old_size=$(stat -c%s ui/metacubexd.zip); new_size=$(stat -c%s .staging/metacubexd.zip)
+            if [ "$new_size" -lt $((old_size / 2)) ]; then
+              echo "::error::metacubexd 新包体积 ($new_size) 不足旧包一半 ($old_size)"; exit 1
+            fi
+          fi
+          cp .staging/metacubexd.zip ui/metacubexd.zip
+          jq -n --arg v "$new_ver" --arg t "$(date -u +%FT%TZ)" '{version:$v, updated_at:$t, status:"updated"}' > _meta/metacubexd.json
+
+      - name: yacd-meta
+        id: yacd
+        continue-on-error: true
+        run: |
+          set -e
+          sha=$(curl -fsSL --max-time 30 --retry 3 --retry-delay 5 -H "$GH_AUTH" \
+            "https://api.github.com/repos/MetaCubeX/Yacd-meta/commits/gh-pages" | jq -r '.sha')
+          old=$(jq -r '.version // empty' _meta/yacd-meta.json 2>/dev/null || true)
+          if [ "$sha" = "$old" ] && [ "$FORCE" != "true" ]; then echo "yacd-meta 版本未变"; exit 0; fi
+          curl -fL --max-time 300 --retry 3 --retry-delay 5 -o .staging/yacd-meta.zip \
+            "https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip"
+          unzip -t .staging/yacd-meta.zip >/dev/null
+          if [ -f ui/yacd-meta.zip ]; then
+            old_size=$(stat -c%s ui/yacd-meta.zip); new_size=$(stat -c%s .staging/yacd-meta.zip)
+            if [ "$new_size" -lt $((old_size / 2)) ]; then
+              echo "::error::yacd-meta 新包体积异常"; exit 1
+            fi
+          fi
+          cp .staging/yacd-meta.zip ui/yacd-meta.zip
+          jq -n --arg v "$sha" --arg t "$(date -u +%FT%TZ)" '{version:$v, updated_at:$t, status:"updated"}' > _meta/yacd-meta.json
+
+      - name: zashboard
+        id: zash
+        continue-on-error: true
+        run: |
+          set -e
+          rel=$(curl -fsSL --max-time 30 --retry 3 --retry-delay 5 -H "$GH_AUTH" \
+            "https://api.github.com/repos/Zephyruso/zashboard/releases/latest")
+          # 只要不带字体后缀的标准包，别的字体变体资产不要
+          asset_url=$(echo "$rel" | jq -r '.assets[] | select(.name=="dist.zip") | .browser_download_url')
+          new_ver=$(echo "$rel" | jq -r '.tag_name')
+          if [ -z "$asset_url" ] || [ "$asset_url" = "null" ]; then
+            echo "::error::zashboard 未找到 dist.zip"; exit 1
+          fi
+          old_ver=$(jq -r '.version // empty' _meta/zashboard.json 2>/dev/null || true)
+          if [ "$new_ver" = "$old_ver" ] && [ "$FORCE" != "true" ]; then echo "zashboard 版本未变 ($new_ver)"; exit 0; fi
+          curl -fL --max-time 300 --retry 3 --retry-delay 5 -o .staging/zashboard.zip "$asset_url"
+          unzip -t .staging/zashboard.zip >/dev/null
+          if [ -f ui/zashboard.zip ]; then
+            old_size=$(stat -c%s ui/zashboard.zip); new_size=$(stat -c%s .staging/zashboard.zip)
+            if [ "$new_size" -lt $((old_size / 2)) ]; then
+              echo "::error::zashboard 新包体积异常"; exit 1
+            fi
+          fi
+          cp .staging/zashboard.zip ui/zashboard.zip
+          jq -n --arg v "$new_ver" --arg t "$(date -u +%FT%TZ)" '{version:$v, updated_at:$t, status:"updated"}' > _meta/zashboard.json
+
+      - name: geo 数据 (geoip / geosite / country.mmdb)
+        id: geo
+        continue-on-error: true
+        run: |
+          set +e
+          rel=$(curl -fsSL --max-time 30 --retry 3 --retry-delay 5 -H "$GH_AUTH" \
+            "https://api.github.com/repos/MetaCubeX/meta-rules-dat/releases/tags/latest")
+          fail=0
+          for f in geoip.dat geosite.dat country.mmdb; do
+            url=$(echo "$rel" | jq -r --arg n "$f" '.assets[] | select(.name==$n) | .browser_download_url')
+            # 这个 release 的 tag 是固定字符串 "latest"（滚动更新，不是常规版本号），用资产自身的 updated_at 当版本信号
+            new_ver=$(echo "$rel" | jq -r --arg n "$f" '.assets[] | select(.name==$n) | .updated_at')
+            if [ -z "$url" ] || [ "$url" = "null" ]; then
+              echo "::error::geo[$f] 未找到对应 asset"; fail=1; continue
+            fi
+            old_ver=$(jq -r '.version // empty' "_meta/geo-$f.json" 2>/dev/null)
+            if [ "$new_ver" = "$old_ver" ] && [ "$FORCE" != "true" ]; then echo "geo[$f] 版本未变"; continue; fi
+            if ! curl -fL --max-time 300 --retry 3 --retry-delay 5 -o ".staging/$f" "$url"; then
+              echo "::error::geo[$f] 下载失败"; fail=1; continue
+            fi
+            # geoip.dat/geosite.dat 是 v2ray protobuf 格式，没有独特 magic bytes，只能靠体积门槛；
+            # country.mmdb 是 MaxMind mmdb 格式，用 file 命令再多一层格式校验
+            if [ "$f" = "country.mmdb" ]; then
+              file ".staging/$f" | grep -qi "mmdb\|data" || { echo "::error::geo[$f] 格式识别异常"; fail=1; continue; }
+            fi
+            if [ -f "geo/$f" ]; then
+              old_size=$(stat -c%s "geo/$f"); new_size=$(stat -c%s ".staging/$f")
+              if [ "$new_size" -lt $((old_size / 2)) ]; then
+                echo "::error::geo[$f] 体积异常 ($new_size < $((old_size/2)))"; fail=1; continue
+              fi
+            fi
+            cp ".staging/$f" "geo/$f"
+            jq -n --arg v "$new_ver" --arg t "$(date -u +%FT%TZ)" '{version:$v, updated_at:$t, status:"updated"}' > "_meta/geo-$f.json"
+          done
+          exit $fail
+
+      - name: Qure 图标（整仓库镜像）
+        id: icons
+        continue-on-error: true
+        run: |
+          set -e
+          sha=$(curl -fsSL --max-time 30 --retry 3 --retry-delay 5 -H "$GH_AUTH" \
+            "https://api.github.com/repos/Koolson/Qure/commits/master" | jq -r '.sha')
+          old=$(jq -r '.version // empty' _meta/qure.json 2>/dev/null || true)
+          if [ "$sha" = "$old" ] && [ "$FORCE" != "true" ]; then echo "Qure 版本未变"; exit 0; fi
+          curl -fL --max-time 300 --retry 3 --retry-delay 5 -o .staging/qure.zip \
+            "https://github.com/Koolson/Qure/archive/refs/heads/master.zip"
+          unzip -t .staging/qure.zip >/dev/null
+          rm -rf .staging/qure-extract && mkdir -p .staging/qure-extract
+          unzip -q .staging/qure.zip -d .staging/qure-extract
+          inner=$(find .staging/qure-extract -mindepth 1 -maxdepth 1 -type d | head -1)
+          test -d "$inner/IconSet"
+          rm -rf icons/qure && mkdir -p icons/qure
+          cp -r "$inner"/. icons/qure/
+          jq -n --arg v "$sha" --arg t "$(date -u +%FT%TZ)" '{version:$v, updated_at:$t, status:"updated"}' > _meta/qure.json
+
+      - name: clash-rules 规则文件（整仓库镜像）
+        id: clashrules
+        continue-on-error: true
+        run: |
+          set -e
+          sha=$(curl -fsSL --max-time 30 --retry 3 --retry-delay 5 -H "$GH_AUTH" \
+            "https://api.github.com/repos/Loyalsoldier/clash-rules/commits/release" | jq -r '.sha')
+          old=$(jq -r '.version // empty' _meta/clash-rules.json 2>/dev/null || true)
+          if [ "$sha" = "$old" ] && [ "$FORCE" != "true" ]; then echo "clash-rules 版本未变"; exit 0; fi
+          curl -fL --max-time 300 --retry 3 --retry-delay 5 -o .staging/clash-rules.zip \
+            "https://github.com/Loyalsoldier/clash-rules/archive/refs/heads/release.zip"
+          unzip -t .staging/clash-rules.zip >/dev/null
+          rm -rf .staging/clash-rules-extract && mkdir -p .staging/clash-rules-extract
+          unzip -q .staging/clash-rules.zip -d .staging/clash-rules-extract
+          inner=$(find .staging/clash-rules-extract -mindepth 1 -maxdepth 1 -type d | head -1)
+          # 现有配置实际引用的 5 个文件必须存在，缺一个就当整体失败，不用半失效的镜像覆盖旧数据
+          for f in reject.txt gfw.txt proxy.txt direct.txt cncidr.txt; do
+            test -s "$inner/$f"
+          done
+          rm -rf rules/clash-rules && mkdir -p rules/clash-rules
+          cp "$inner"/*.txt rules/clash-rules/
+          jq -n --arg v "$sha" --arg t "$(date -u +%FT%TZ)" '{version:$v, updated_at:$t, status:"updated"}' > _meta/clash-rules.json
+
+      # ------------------------------------------------------------------
+      # C 类：预留资源（先落地，不接入任何 header）
+      # ------------------------------------------------------------------
+
+      - name: GeoLite2-ASN.mmdb
+        id: asn
+        continue-on-error: true
+        run: |
+          set -e
+          rel=$(curl -fsSL --max-time 30 --retry 3 --retry-delay 5 -H "$GH_AUTH" \
+            "https://api.github.com/repos/xishang0128/geoip/releases/latest")
+          asset_url=$(echo "$rel" | jq -r '.assets[] | select(.name=="GeoLite2-ASN.mmdb") | .browser_download_url')
+          new_ver=$(echo "$rel" | jq -r '.tag_name')
+          if [ -z "$asset_url" ] || [ "$asset_url" = "null" ]; then
+            echo "::error::ASN mmdb 未找到对应 asset"; exit 1
+          fi
+          old_ver=$(jq -r '.version // empty' _meta/asn.json 2>/dev/null || true)
+          if [ "$new_ver" = "$old_ver" ] && [ "$FORCE" != "true" ]; then echo "ASN mmdb 版本未变 ($new_ver)"; exit 0; fi
+          curl -fL --max-time 300 --retry 3 --retry-delay 5 -o .staging/GeoLite2-ASN.mmdb "$asset_url"
+          if [ -f asn/GeoLite2-ASN.mmdb ]; then
+            old_size=$(stat -c%s asn/GeoLite2-ASN.mmdb); new_size=$(stat -c%s .staging/GeoLite2-ASN.mmdb)
+            if [ "$new_size" -lt $((old_size / 2)) ]; then
+              echo "::error::ASN mmdb 体积异常"; exit 1
+            fi
+          fi
+          cp .staging/GeoLite2-ASN.mmdb asn/GeoLite2-ASN.mmdb
+          jq -n --arg v "$new_ver" --arg t "$(date -u +%FT%TZ)" '{version:$v, updated_at:$t, status:"updated"}' > _meta/asn.json
+
+      # ------------------------------------------------------------------
+      # D 类：客户端安装包（每个平台只留一个主流架构）
+      # ------------------------------------------------------------------
+
+      - name: mihomo 核心 (darwin-arm64 / windows-amd64 / linux-amd64)
+        id: mihomo
+        continue-on-error: true
+        run: |
+          set +e
+          rel=$(curl -fsSL --max-time 30 --retry 3 --retry-delay 5 -H "$GH_AUTH" \
+            "https://api.github.com/repos/MetaCubeX/mihomo/releases/latest")
+          new_ver=$(echo "$rel" | jq -r '.tag_name')
+          fail=0
+          declare -A specs=(
+            [darwin-arm64]='^mihomo-darwin-arm64-v[0-9][^-]*\.gz$::clients/mihomo/mihomo-darwin-arm64.gz'
+            [windows-amd64]='^mihomo-windows-amd64-v[0-9][^-]*\.zip$::clients/mihomo/mihomo-windows-amd64.zip'
+            [linux-amd64]='^mihomo-linux-amd64-v[0-9][^-]*\.gz$::clients/mihomo/mihomo-linux-amd64.gz'
+          )
+          # 排除 -compatible / -go120 等兼容性变体，只要标准构建
+          for key in "${!specs[@]}"; do
+            regex="${specs[$key]%%::*}"; dest="${specs[$key]##*::}"
+            url=$(echo "$rel" | jq -r --arg re "$regex" '.assets[] | select(.name | test($re)) | .browser_download_url' | head -1)
+            name=$(echo "$rel" | jq -r --arg re "$regex" '.assets[] | select(.name | test($re)) | .name' | head -1)
+            if [ -z "$url" ]; then echo "::error::mihomo[$key] 未匹配到 asset（正则 $regex）"; fail=1; continue; fi
+            old_ver=$(jq -r '.version // empty' "_meta/mihomo-$key.json" 2>/dev/null)
+            if [ "$new_ver" = "$old_ver" ] && [ "$FORCE" != "true" ]; then echo "mihomo[$key] 版本未变"; continue; fi
+            if ! curl -fL --max-time 300 --retry 3 --retry-delay 5 -o ".staging/$name" "$url"; then
+              echo "::error::mihomo[$key] 下载失败"; fail=1; continue
+            fi
+            new_size=$(stat -c%s ".staging/$name")
+            if [ -f "$dest" ]; then
+              old_size=$(stat -c%s "$dest")
+              if [ "$new_size" -lt $((old_size / 2)) ]; then echo "::error::mihomo[$key] 体积异常"; fail=1; continue; fi
+            fi
+            case "$name" in
+              *.zip) unzip -t ".staging/$name" >/dev/null || { echo "::error::mihomo[$key] zip 损坏"; fail=1; continue; } ;;
+              *.gz) gzip -t ".staging/$name" || { echo "::error::mihomo[$key] gzip 损坏"; fail=1; continue; } ;;
+            esac
+            cp ".staging/$name" "$dest"
+            jq -n --arg v "$new_ver" --arg t "$(date -u +%FT%TZ)" '{version:$v, updated_at:$t, status:"updated"}' > "_meta/mihomo-$key.json"
+          done
+          exit $fail
+
+      - name: Clash Verge Rev (aarch64 dmg / x64 exe / amd64 deb+rpm)
+        id: cvr
+        continue-on-error: true
+        run: |
+          set +e
+          rel=$(curl -fsSL --max-time 30 --retry 3 --retry-delay 5 -H "$GH_AUTH" \
+            "https://api.github.com/repos/clash-verge-rev/clash-verge-rev/releases/latest")
+          new_ver=$(echo "$rel" | jq -r '.tag_name')
+          fail=0
+          # 注意：这几条正则是按 Tauri 打包的常见命名规律写的，没有直接核对当前 release 页面的真实文件名，
+          # 首次跑（或者 workflow_dispatch 手动 force 跑一次）时如果报"未匹配到 asset"，去 release 页面核对文件名后调整正则
+          declare -A specs=(
+            [macos-aarch64]='(?i)aarch64.*\.dmg$::clients/clash-verge-rev/ClashVergeRev-aarch64.dmg'
+            [windows-x64]='(?i)x64.*setup.*\.exe$::clients/clash-verge-rev/ClashVergeRev-x64-setup.exe'
+            [linux-amd64-deb]='amd64\.deb$::clients/clash-verge-rev/clash-verge-rev-amd64.deb'
+            [linux-amd64-rpm]='(x86_64|amd64)\.rpm$::clients/clash-verge-rev/clash-verge-rev-amd64.rpm'
+          )
+          for key in "${!specs[@]}"; do
+            regex="${specs[$key]%%::*}"; dest="${specs[$key]##*::}"
+            url=$(echo "$rel" | jq -r --arg re "$regex" '.assets[] | select(.name | test($re; "i")) | .browser_download_url' | head -1)
+            name=$(echo "$rel" | jq -r --arg re "$regex" '.assets[] | select(.name | test($re; "i")) | .name' | head -1)
+            if [ -z "$url" ]; then echo "::error::clash-verge-rev[$key] 未匹配到 asset（正则 $regex，请去 release 页面核对文件名)"; fail=1; continue; fi
+            old_ver=$(jq -r '.version // empty' "_meta/cvr-$key.json" 2>/dev/null)
+            if [ "$new_ver" = "$old_ver" ] && [ "$FORCE" != "true" ]; then echo "clash-verge-rev[$key] 版本未变"; continue; fi
+            if ! curl -fL --max-time 300 --retry 3 --retry-delay 5 -o ".staging/$name" "$url"; then
+              echo "::error::clash-verge-rev[$key] 下载失败"; fail=1; continue
+            fi
+            new_size=$(stat -c%s ".staging/$name")
+            if [ -f "$dest" ]; then
+              old_size=$(stat -c%s "$dest")
+              if [ "$new_size" -lt $((old_size / 2)) ]; then echo "::error::clash-verge-rev[$key] 体积异常"; fail=1; continue; fi
+            fi
+            cp ".staging/$name" "$dest"
+            jq -n --arg v "$new_ver" --arg t "$(date -u +%FT%TZ)" '{version:$v, updated_at:$t, status:"updated"}' > "_meta/cvr-$key.json"
+          done
+          exit $fail
+
+      - name: FlClash (macos-arm64 dmg / windows-x64 exe / linux-amd64 deb+rpm / android arm64-v8a apk)
+        id: flc
+        continue-on-error: true
+        run: |
+          set +e
+          rel=$(curl -fsSL --max-time 30 --retry 3 --retry-delay 5 -H "$GH_AUTH" \
+            "https://api.github.com/repos/chen08209/FlClash/releases/latest")
+          new_ver=$(echo "$rel" | jq -r '.tag_name')
+          fail=0
+          declare -A specs=(
+            [macos-arm64]='(?i)macos.*arm64.*\.dmg$::clients/flclash/FlClash-macos-arm64.dmg'
+            [windows-x64]='(?i)windows.*\.exe$::clients/flclash/FlClash-windows-x64-setup.exe'
+            [linux-amd64-deb]='(?i)linux.*amd64\.deb$::clients/flclash/FlClash-linux-amd64.deb'
+            [linux-amd64-rpm]='(?i)linux.*amd64\.rpm$::clients/flclash/FlClash-linux-amd64.rpm'
+            [android-arm64-v8a]='(?i)android.*arm64-v8a\.apk$::clients/flclash/FlClash-android-arm64-v8a.apk'
+          )
+          for key in "${!specs[@]}"; do
+            regex="${specs[$key]%%::*}"; dest="${specs[$key]##*::}"
+            url=$(echo "$rel" | jq -r --arg re "$regex" '.assets[] | select(.name | test($re)) | .browser_download_url' | head -1)
+            name=$(echo "$rel" | jq -r --arg re "$regex" '.assets[] | select(.name | test($re)) | .name' | head -1)
+            if [ -z "$url" ]; then echo "::error::FlClash[$key] 未匹配到 asset（正则 $regex，请去 release 页面核对文件名)"; fail=1; continue; fi
+            old_ver=$(jq -r '.version // empty' "_meta/flc-$key.json" 2>/dev/null)
+            if [ "$new_ver" = "$old_ver" ] && [ "$FORCE" != "true" ]; then echo "FlClash[$key] 版本未变"; continue; fi
+            if ! curl -fL --max-time 300 --retry 3 --retry-delay 5 -o ".staging/$name" "$url"; then
+              echo "::error::FlClash[$key] 下载失败"; fail=1; continue
+            fi
+            new_size=$(stat -c%s ".staging/$name")
+            if [ -f "$dest" ]; then
+              old_size=$(stat -c%s "$dest")
+              if [ "$new_size" -lt $((old_size / 2)) ]; then echo "::error::FlClash[$key] 体积异常"; fail=1; continue; fi
+            fi
+            if [[ "$name" == *.apk ]]; then
+              unzip -t ".staging/$name" >/dev/null || { echo "::error::FlClash[$key] apk 损坏"; fail=1; continue; }
+              unzip -l ".staging/$name" | grep -qi AndroidManifest.xml || { echo "::error::FlClash[$key] apk 内容异常"; fail=1; continue; }
+            fi
+            cp ".staging/$name" "$dest"
+            jq -n --arg v "$new_ver" --arg t "$(date -u +%FT%TZ)" '{version:$v, updated_at:$t, status:"updated"}' > "_meta/flc-$key.json"
+          done
+          exit $fail
+
+      # ------------------------------------------------------------------
+      # 收尾：汇总状态、squash 成单一 commit、强推到 GitHub 自身（下游 Forgejo/Gitee 走各自的 pull mirror）
+      # ------------------------------------------------------------------
+
+      - name: 汇总 _meta/status.json
+        id: summary
+        if: always()
+        env:
+          O_MCXD: ${{ steps.mcxd.outcome }}
+          O_YACD: ${{ steps.yacd.outcome }}
+          O_ZASH: ${{ steps.zash.outcome }}
+          O_GEO: ${{ steps.geo.outcome }}
+          O_ICONS: ${{ steps.icons.outcome }}
+          O_CLASHRULES: ${{ steps.clashrules.outcome }}
+          O_ASN: ${{ steps.asn.outcome }}
+          O_MIHOMO: ${{ steps.mihomo.outcome }}
+          O_CVR: ${{ steps.cvr.outcome }}
+          O_FLC: ${{ steps.flc.outcome }}
+        run: |
+          resources=$(jq -s 'reduce .[] as $item ({}; . + $item)' \
+            <(for f in _meta/*.json; do
+                [ "$(basename "$f")" = "status.json" ] && continue
+                [ -f "$f" ] && jq --arg k "$(basename "$f" .json)" '{($k): .}' "$f"
+              done) 2>/dev/null)
+          [ -z "$resources" ] && resources='{}'
+          failed=$(jq -n \
+            --arg mcxd "$O_MCXD" --arg yacd "$O_YACD" --arg zash "$O_ZASH" --arg geo "$O_GEO" \
+            --arg icons "$O_ICONS" --arg clashrules "$O_CLASHRULES" --arg asn "$O_ASN" \
+            --arg mihomo "$O_MIHOMO" --arg cvr "$O_CVR" --arg flc "$O_FLC" \
+            '[["metacubexd",$mcxd],["yacd-meta",$yacd],["zashboard",$zash],["geo",$geo],["qure",$icons],
+              ["clash-rules",$clashrules],["asn",$asn],["mihomo",$mihomo],["clash-verge-rev",$cvr],["flclash",$flc]]
+             | map(select(.[1]=="failure") | .[0])')
+          jq -n --argjson resources "$resources" --argjson failed "$failed" --arg t "$(date -u +%FT%TZ)" \
+            '{resources: $resources, last_run: {at: $t, failed_steps: $failed}}' > _meta/status.json
+
+      - name: 把最新同步状态写回 README
+        if: always()
+        run: |
+          {
+            echo "<!-- SYNC_STATUS:START -->"
+            echo "> 最后一次运行：**$(jq -r '.last_run.at // "从未运行"' _meta/status.json 2>/dev/null)**（UTC）"
+            failed=$(jq -r '(.last_run.failed_steps // [])[]' _meta/status.json 2>/dev/null)
+            if [ -n "$failed" ]; then
+              echo ">"
+              echo "> ⚠️ 上次运行里这些资源拉取/校验失败了，下面表格显示的还是更早的旧版本：$(echo "$failed" | paste -sd '、' -)"
+            fi
+            echo
+            echo "| 资源 | 当前版本 | 更新时间 (UTC) |"
+            echo "| --- | --- | --- |"
+            jq -r '.resources // {} | to_entries | sort_by(.key)[] |
+              "| \(.key) | `\((.value.version // "-")[0:12])` | \(.value.updated_at // "-") |"' \
+              _meta/status.json 2>/dev/null
+            echo "<!-- SYNC_STATUS:END -->"
+          } > .staging/status_block.md
+          awk '
+            BEGIN { skip=0 }
+            /<!-- SYNC_STATUS:START -->/ { while ((getline line < ".staging/status_block.md") > 0) print line; skip=1; next }
+            /<!-- SYNC_STATUS:END -->/ { skip=0; next }
+            skip==0 { print }
+          ' README.md > .staging/README.md.new && mv .staging/README.md.new README.md
+
+      - name: squash commit & push
+        if: always()
+        run: |
+          git config user.name "mirror-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "内容无变化，本次不 push"
+            exit 0
+          fi
+          git checkout --orphan tmp-squash
+          git add -A
+          git commit -m "sync $(date -u +%F)"
+          git branch -M tmp-squash main
+          git push origin main --force
+          # Forgejo/Gitee 等下游走各自的 pull mirror 指向本仓库，本 workflow 不负责推送到它们。
+          # 这也是为什么这里必须坚持 squash 成单一 commit：下游 pull mirror 每次全量 clone
+          # 的就是这一个 commit 的内容，仓库体积不会随时间累积。
+          # 注：如果给 main 分支开了 branch protection，需要给这个 workflow 的 token 开例外，
+          # 否则 force push 会被规则拒绝。
+
+      - name: 检查本次是否有资源失败
+        if: |
+          always() && (
+            steps.mcxd.outcome == 'failure' || steps.yacd.outcome == 'failure' ||
+            steps.zash.outcome == 'failure' || steps.geo.outcome == 'failure' ||
+            steps.icons.outcome == 'failure' || steps.clashrules.outcome == 'failure' ||
+            steps.asn.outcome == 'failure' ||
+            steps.mihomo.outcome == 'failure' || steps.cvr.outcome == 'failure' ||
+            steps.flc.outcome == 'failure'
+          )
+        run: |
+          echo "::error::本次运行有资源拉取/校验失败，已保留旧版本，详见上方各 step 日志及 _meta/status.json 的 last_run.failed_steps"
+          exit 1
