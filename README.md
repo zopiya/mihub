@@ -8,12 +8,12 @@
 ## 📡 最新同步状态
 
 <!-- SYNC_STATUS:START -->
-> 最后一次运行：**2026-08-07T20:51:01Z**（UTC）
+> 最后一次运行：**2026-08-08T20:39:35Z**（UTC）
 
 | 资源 | 当前版本 | 更新时间 (UTC) |
 | --- | --- | --- |
 | asn | `latest` | 2026-08-07T04:10:43Z |
-| clash-rules | `389f2079daa0` | 2026-08-07T04:10:42Z |
+| clash-rules | `9db8320940a8` | 2026-08-08T20:39:34Z |
 | cvr-linux-amd64-deb | `v2.5.2` | 2026-08-07T04:10:49Z |
 | cvr-linux-amd64-rpm | `v2.5.2` | 2026-08-07T04:10:47Z |
 | cvr-macos-aarch64 | `v2.5.2` | 2026-08-07T04:10:49Z |
@@ -23,16 +23,16 @@
 | flc-linux-amd64-rpm | `v0.8.94` | 2026-08-07T04:10:51Z |
 | flc-macos-arm64 | `v0.8.94` | 2026-08-07T04:10:50Z |
 | flc-windows-x64 | `v0.8.94` | 2026-08-07T04:10:53Z |
-| geo-country.mmdb | `2026-08-07T0` | 2026-08-07T04:10:39Z |
-| geo-geoip.dat | `2026-08-07T0` | 2026-08-07T04:10:38Z |
-| geo-geosite.dat | `2026-08-07T0` | 2026-08-07T04:10:38Z |
+| geo-country.mmdb | `2026-08-07T2` | 2026-08-08T20:39:32Z |
+| geo-geoip.dat | `2026-08-07T2` | 2026-08-08T20:39:32Z |
+| geo-geosite.dat | `2026-08-07T2` | 2026-08-08T20:39:32Z |
 | metacubexd | `v1.271.0` | 2026-08-07T04:10:35Z |
 | mihomo-darwin-arm64 | `v1.19.29` | 2026-08-07T04:10:44Z |
 | mihomo-linux-amd64 | `v1.19.29` | 2026-08-07T04:10:46Z |
 | mihomo-windows-amd64 | `v1.19.29` | 2026-08-07T04:10:45Z |
 | qure | `b16b260625f8` | 2026-08-07T04:10:41Z |
 | yacd-meta | `aebef5a497b1` | 2026-08-07T20:50:57Z |
-| zashboard | `v3.17.0` | 2026-08-07T04:10:37Z |
+| zashboard | `v3.18.0` | 2026-08-08T20:39:31Z |
 <!-- SYNC_STATUS:END -->
 
 这张表由 [sync.yml](.github/workflows/sync.yml) 每天自动更新，不用手动维护。
