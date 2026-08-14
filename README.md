@@ -8,31 +8,31 @@
 ## 📡 最新同步状态
 
 <!-- SYNC_STATUS:START -->
-> 最后一次运行：**2026-08-13T20:54:16Z**（UTC）
+> 最后一次运行：**2026-08-14T20:38:03Z**（UTC）
 
 | 资源 | 当前版本 | 更新时间 (UTC) |
 | --- | --- | --- |
 | asn | `latest` | 2026-08-07T04:10:43Z |
-| clash-rules | `71874797390f` | 2026-08-13T20:54:14Z |
+| clash-rules | `904bd7c53bfc` | 2026-08-14T20:37:57Z |
 | cvr-linux-amd64-deb | `v2.5.2` | 2026-08-07T04:10:49Z |
 | cvr-linux-amd64-rpm | `v2.5.2` | 2026-08-07T04:10:47Z |
 | cvr-macos-aarch64 | `v2.5.2` | 2026-08-07T04:10:49Z |
 | cvr-windows-x64 | `v2.5.2` | 2026-08-07T04:10:48Z |
-| flc-android-arm64-v8a | `v0.8.94` | 2026-08-07T04:10:53Z |
-| flc-linux-amd64-deb | `v0.8.94` | 2026-08-07T04:10:54Z |
-| flc-linux-amd64-rpm | `v0.8.94` | 2026-08-07T04:10:51Z |
-| flc-macos-arm64 | `v0.8.94` | 2026-08-07T04:10:50Z |
-| flc-windows-x64 | `v0.8.94` | 2026-08-07T04:10:53Z |
-| geo-country.mmdb | `2026-08-12T2` | 2026-08-13T20:54:12Z |
-| geo-geoip.dat | `2026-08-12T2` | 2026-08-13T20:54:11Z |
-| geo-geosite.dat | `2026-08-12T2` | 2026-08-13T20:54:12Z |
+| flc-android-arm64-v8a | `v0.8.95` | 2026-08-14T20:38:01Z |
+| flc-linux-amd64-deb | `v0.8.95` | 2026-08-14T20:38:02Z |
+| flc-linux-amd64-rpm | `v0.8.95` | 2026-08-14T20:38:00Z |
+| flc-macos-arm64 | `v0.8.95` | 2026-08-14T20:37:59Z |
+| flc-windows-x64 | `v0.8.95` | 2026-08-14T20:38:01Z |
+| geo-country.mmdb | `2026-08-13T2` | 2026-08-14T20:37:55Z |
+| geo-geoip.dat | `2026-08-13T2` | 2026-08-14T20:37:55Z |
+| geo-geosite.dat | `2026-08-13T2` | 2026-08-14T20:37:55Z |
 | metacubexd | `v1.271.0` | 2026-08-07T04:10:35Z |
 | mihomo-darwin-arm64 | `v1.19.29` | 2026-08-07T04:10:44Z |
 | mihomo-linux-amd64 | `v1.19.29` | 2026-08-07T04:10:46Z |
 | mihomo-windows-amd64 | `v1.19.29` | 2026-08-07T04:10:45Z |
 | qure | `b16b260625f8` | 2026-08-07T04:10:41Z |
 | yacd-meta | `ba5f198831a1` | 2026-08-13T20:54:10Z |
-| zashboard | `v3.18.0` | 2026-08-08T20:39:31Z |
+| zashboard | `v3.19.0` | 2026-08-14T20:37:54Z |
 <!-- SYNC_STATUS:END -->
 
 这张表由 [sync.yml](.github/workflows/sync.yml) 每天自动更新，不用手动维护。
