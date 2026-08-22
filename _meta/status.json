@@ -1,0 +1,113 @@
+{
+  "resources": {
+    "asn": {
+      "version": "latest",
+      "updated_at": "2026-08-07T04:10:43Z",
+      "status": "updated"
+    },
+    "clash-rules": {
+      "version": "55188dc20d3d0ac0a58a4354e08199f5e6f5ecca",
+      "updated_at": "2026-08-22T20:32:05Z",
+      "status": "updated"
+    },
+    "cvr-linux-amd64-deb": {
+      "version": "v2.5.2",
+      "updated_at": "2026-08-07T04:10:49Z",
+      "status": "updated"
+    },
+    "cvr-linux-amd64-rpm": {
+      "version": "v2.5.2",
+      "updated_at": "2026-08-07T04:10:47Z",
+      "status": "updated"
+    },
+    "cvr-macos-aarch64": {
+      "version": "v2.5.2",
+      "updated_at": "2026-08-07T04:10:49Z",
+      "status": "updated"
+    },
+    "cvr-windows-x64": {
+      "version": "v2.5.2",
+      "updated_at": "2026-08-07T04:10:48Z",
+      "status": "updated"
+    },
+    "flc-android-arm64-v8a": {
+      "version": "v0.8.96",
+      "updated_at": "2026-08-17T20:35:27Z",
+      "status": "updated"
+    },
+    "flc-linux-amd64-deb": {
+      "version": "v0.8.96",
+      "updated_at": "2026-08-17T20:35:28Z",
+      "status": "updated"
+    },
+    "flc-linux-amd64-rpm": {
+      "version": "v0.8.96",
+      "updated_at": "2026-08-17T20:35:25Z",
+      "status": "updated"
+    },
+    "flc-macos-arm64": {
+      "version": "v0.8.96",
+      "updated_at": "2026-08-17T20:35:25Z",
+      "status": "updated"
+    },
+    "flc-windows-x64": {
+      "version": "v0.8.96",
+      "updated_at": "2026-08-17T20:35:28Z",
+      "status": "updated"
+    },
+    "geo-country.mmdb": {
+      "version": "2026-08-21T22:50:35Z",
+      "updated_at": "2026-08-22T20:32:04Z",
+      "status": "updated"
+    },
+    "geo-geoip.dat": {
+      "version": "2026-08-21T22:50:36Z",
+      "updated_at": "2026-08-22T20:32:03Z",
+      "status": "updated"
+    },
+    "geo-geosite.dat": {
+      "version": "2026-08-21T22:50:37Z",
+      "updated_at": "2026-08-22T20:32:03Z",
+      "status": "updated"
+    },
+    "metacubexd": {
+      "version": "v1.273.0",
+      "updated_at": "2026-08-16T20:31:12Z",
+      "status": "updated"
+    },
+    "mihomo-darwin-arm64": {
+      "version": "v1.19.30",
+      "updated_at": "2026-08-16T20:31:18Z",
+      "status": "updated"
+    },
+    "mihomo-linux-amd64": {
+      "version": "v1.19.30",
+      "updated_at": "2026-08-16T20:31:19Z",
+      "status": "updated"
+    },
+    "mihomo-windows-amd64": {
+      "version": "v1.19.30",
+      "updated_at": "2026-08-16T20:31:19Z",
+      "status": "updated"
+    },
+    "qure": {
+      "version": "b16b260625f873266f6a6a9b88710132774997b8",
+      "updated_at": "2026-08-07T04:10:41Z",
+      "status": "updated"
+    },
+    "yacd-meta": {
+      "version": "5e19aba94b61ea734beeb1ae7e846ee355ca6a42",
+      "updated_at": "2026-08-20T20:37:49Z",
+      "status": "updated"
+    },
+    "zashboard": {
+      "version": "v3.21.0",
+      "updated_at": "2026-08-19T20:37:44Z",
+      "status": "updated"
+    }
+  },
+  "last_run": {
+    "at": "2026-08-22T20:32:07Z",
+    "failed_steps": []
+  }
+}
