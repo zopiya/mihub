@@ -8,30 +8,30 @@
 ## 📡 最新同步状态
 
 <!-- SYNC_STATUS:START -->
-> 最后一次运行：**2026-09-13T22:19:57Z**（UTC）
+> 最后一次运行：**2026-09-14T23:04:12Z**（UTC）
 
 | 资源 | 当前版本 | 更新时间 (UTC) |
 | --- | --- | --- |
 | asn | `latest` | 2026-08-07T04:10:43Z |
-| clash-rules | `c76d6ad0eee8` | 2026-09-13T22:19:55Z |
+| clash-rules | `bfa77fb0987d` | 2026-09-14T23:04:05Z |
 | cvr-linux-amd64-deb | `v2.5.2` | 2026-08-07T04:10:49Z |
 | cvr-linux-amd64-rpm | `v2.5.2` | 2026-08-07T04:10:47Z |
 | cvr-macos-aarch64 | `v2.5.2` | 2026-08-07T04:10:49Z |
 | cvr-windows-x64 | `v2.5.2` | 2026-08-07T04:10:48Z |
-| flc-android-arm64-v8a | `v0.8.97` | 2026-09-10T22:27:10Z |
-| flc-linux-amd64-deb | `v0.8.97` | 2026-09-10T22:27:11Z |
-| flc-linux-amd64-rpm | `v0.8.97` | 2026-09-10T22:27:08Z |
-| flc-macos-arm64 | `v0.8.97` | 2026-09-10T22:27:07Z |
-| flc-windows-x64 | `v0.8.97` | 2026-09-10T22:27:10Z |
-| geo-country.mmdb | `2026-09-13T0` | 2026-09-13T22:19:54Z |
-| geo-geoip.dat | `2026-09-13T0` | 2026-09-13T22:19:53Z |
-| geo-geosite.dat | `2026-09-13T0` | 2026-09-13T22:19:53Z |
+| flc-android-arm64-v8a | `v0.8.98` | 2026-09-14T23:04:11Z |
+| flc-linux-amd64-deb | `v0.8.98` | 2026-09-14T23:04:12Z |
+| flc-linux-amd64-rpm | `v0.8.98` | 2026-09-14T23:04:10Z |
+| flc-macos-arm64 | `v0.8.98` | 2026-09-14T23:04:09Z |
+| flc-windows-x64 | `v0.8.98` | 2026-09-14T23:04:12Z |
+| geo-country.mmdb | `2026-09-14T0` | 2026-09-14T23:04:04Z |
+| geo-geoip.dat | `2026-09-14T0` | 2026-09-14T23:04:02Z |
+| geo-geosite.dat | `2026-09-14T0` | 2026-09-14T23:04:03Z |
 | metacubexd | `v1.273.1` | 2026-09-10T22:27:01Z |
-| mihomo-darwin-arm64 | `v1.19.30` | 2026-08-16T20:31:18Z |
-| mihomo-linux-amd64 | `v1.19.30` | 2026-08-16T20:31:19Z |
-| mihomo-windows-amd64 | `v1.19.30` | 2026-08-16T20:31:19Z |
+| mihomo-darwin-arm64 | `v1.19.31` | 2026-09-14T23:04:06Z |
+| mihomo-linux-amd64 | `v1.19.31` | 2026-09-14T23:04:08Z |
+| mihomo-windows-amd64 | `v1.19.31` | 2026-09-14T23:04:07Z |
 | qure | `b16b260625f8` | 2026-08-07T04:10:41Z |
-| yacd-meta | `6945744f5ab1` | 2026-09-09T22:27:05Z |
+| yacd-meta | `e99551d4d6d0` | 2026-09-14T23:04:01Z |
 | zashboard | `v3.26.0` | 2026-09-07T22:45:20Z |
 <!-- SYNC_STATUS:END -->
 
