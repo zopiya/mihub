@@ -8,31 +8,31 @@
 ## 📡 最新同步状态
 
 <!-- SYNC_STATUS:START -->
-> 最后一次运行：**2026-09-21T23:11:02Z**（UTC）
+> 最后一次运行：**2026-09-22T22:52:29Z**（UTC）
 
 | 资源 | 当前版本 | 更新时间 (UTC) |
 | --- | --- | --- |
 | asn | `latest` | 2026-08-07T04:10:43Z |
-| clash-rules | `50129d33e32d` | 2026-09-21T23:10:56Z |
-| cvr-linux-amd64-deb | `v2.5.2` | 2026-09-21T23:11:01Z |
-| cvr-linux-amd64-rpm | `v2.5.2` | 2026-09-21T23:10:59Z |
-| cvr-macos-aarch64 | `v2.5.2` | 2026-09-21T23:11:01Z |
-| cvr-windows-x64 | `v2.5.2` | 2026-09-21T23:10:59Z |
+| clash-rules | `be3f25fb0f03` | 2026-09-22T22:52:23Z |
+| cvr-linux-amd64-deb | `v2.5.5` | 2026-09-22T22:52:27Z |
+| cvr-linux-amd64-rpm | `v2.5.5` | 2026-09-22T22:52:25Z |
+| cvr-macos-aarch64 | `v2.5.5` | 2026-09-22T22:52:28Z |
+| cvr-windows-x64 | `v2.5.5` | 2026-09-22T22:52:26Z |
 | flc-android-arm64-v8a | `v0.8.98` | 2026-09-14T23:04:11Z |
 | flc-linux-amd64-deb | `v0.8.98` | 2026-09-14T23:04:12Z |
 | flc-linux-amd64-rpm | `v0.8.98` | 2026-09-14T23:04:10Z |
 | flc-macos-arm64 | `v0.8.98` | 2026-09-14T23:04:09Z |
 | flc-windows-x64 | `v0.8.98` | 2026-09-14T23:04:12Z |
-| geo-country.mmdb | `2026-09-21T0` | 2026-09-21T23:10:55Z |
-| geo-geoip.dat | `2026-09-21T0` | 2026-09-21T23:10:54Z |
-| geo-geosite.dat | `2026-09-21T0` | 2026-09-21T23:10:54Z |
+| geo-country.mmdb | `2026-09-22T0` | 2026-09-22T22:52:21Z |
+| geo-geoip.dat | `2026-09-22T0` | 2026-09-22T22:52:20Z |
+| geo-geosite.dat | `2026-09-22T0` | 2026-09-22T22:52:20Z |
 | metacubexd | `v1.273.1` | 2026-09-10T22:27:01Z |
 | mihomo-darwin-arm64 | `v1.19.31` | 2026-09-14T23:04:06Z |
 | mihomo-linux-amd64 | `v1.19.31` | 2026-09-14T23:04:08Z |
 | mihomo-windows-amd64 | `v1.19.31` | 2026-09-14T23:04:07Z |
 | qure | `b16b260625f8` | 2026-08-07T04:10:41Z |
 | yacd-meta | `79848583731b` | 2026-09-18T22:27:47Z |
-| zashboard | `v3.28.0` | 2026-09-17T22:48:11Z |
+| zashboard | `v3.29.0` | 2026-09-22T22:52:19Z |
 <!-- SYNC_STATUS:END -->
 
 这张表由 [sync.yml](.github/workflows/sync.yml) 每天自动更新，不用手动维护。
